@@ -1257,7 +1257,7 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 			} else if (direction < -M_PI){
 				direction += 2*M_PI;
 			}
-			printf("%f, %f, %f\n", th_min[i],th_max[i] , direction);
+			//printf("%f, %f, %f\n", th_min[i],th_max[i] , direction);
 			bool condition = false;
 			if (track_lst[i].range/track_lst[i].speed < 2) {// if time to contact is less than 2s
 				condition = true;
