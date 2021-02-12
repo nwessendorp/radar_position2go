@@ -960,8 +960,8 @@ void ofxRadar24Ghz::data_association2(Tracking_Params_t *track_lst, vector<Measu
 		// Creating cost matrix for GNN based on Euclidean distance:
 		for (uint8_t i = 0; i < MAX_NUM_TRACKS; i++){ //for tracked target...
 			if (track_lst[i].is_alived == 1){
-				KF_predict[0] = (A*x_hat[i]).coeff(0);
-				KF_predict[1] = (A*x_hat[i]).coeff(1);
+				KF_predict[0] = (A*x_hat[i])[0];
+				KF_predict[1] = (A*x_hat[i])[1];
 				for (uint8_t j=0;j<num_of_targets;j++){ //for every measurement
 					double r = measurements[j].range;
 					double th = measurements[j].angle + angle_correction;
@@ -999,8 +999,8 @@ void ofxRadar24Ghz::data_association2(Tracking_Params_t *track_lst, vector<Measu
 				if (assignment[i] > num_of_targets-1){
 					track_lst[i].lifetime_counter += 1;
 					x_hat[i] = A*x_hat[i];
-					track_lst[i].range = (A*x_hat[i]).coeff(0);
-					track_lst[i].angle = (A*x_hat[i]).coeff(1);
+					track_lst[i].range = (A*x_hat[i])[0];
+					track_lst[i].angle = (A*x_hat[i])[1];
 					P[i] = 10*P[i];
 					//printf("3.2\n");
 					// TODO how to update P matrix?
@@ -1240,6 +1240,7 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 	r_b = 0.25;// radius of the obstacle poles
 	margin = 0.1;
 	R = r_a + r_b + margin;
+	//printf("%d\n", avoid_state);
 	for (uint8_t i=0; i< MAX_NUM_TRACKS; i++){
 		if (track_lst[i].is_alived == 1 && track_lst[i].measurement_counter > 5){//TODO tune this param
 			th_cc = asin(R/track_lst[i].range);
