@@ -946,7 +946,9 @@ void ofxRadar24Ghz::data_association2(Tracking_Params_t *track_lst, vector<Measu
 		for (uint8_t j = 0; j < num_of_targets; j++){
 			// get next empty slot in track_lst:
 			uint8_t next_free_id = get_next_free_trackID2(track_lst);
-
+			if (next_free_id == MAX_NUM_TRACKS) {// if 5 targets already being tracked
+				break;
+			}
 			// Add initialisation to track_lst (KF init done inside):
 			//printf("1\n");
 			(void) init_track(track_lst, measurements[j], next_free_id, angle_correction,
@@ -1034,6 +1036,9 @@ void ofxRadar24Ghz::data_association2(Tracking_Params_t *track_lst, vector<Measu
 			for (uint8_t j = 0; j < num_of_targets; j++){
 				if(measurements[j].is_associated == 0){// if there are still measurements over
 					uint8_t next_free_id = get_next_free_trackID2( track_lst );
+					if (next_free_id == MAX_NUM_TRACKS) {// if 5 targets already being tracked
+						break;
+					}
 					// KF initialisation done inside this function:
 					(void) init_track(track_lst, measurements[j], next_free_id, angle_correction,
 									2, 50);//cp_algo_settings->angle_offset_deg,cp_algo_settings->wave_length_ant_spacing_ratio, cp_algo_settings->min_angle_for_track_assignment);
