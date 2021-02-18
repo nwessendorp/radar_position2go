@@ -321,6 +321,7 @@ class ofxRadar24Ghz {
 		// ======== Velocity obstacles =============
 		void velocity_obstacles(Tracking_Params_t *track_lst);
 		int32_t avoid_state;
+		double corr_direction;//desired relative velocity
 
 		// Gating distance:
 		double d_abs = 0.4;//meters

@@ -1272,9 +1272,12 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 				//printf("Avoid mf!\n");
 				if (abs(direction - th_min[i]) < abs(direction - th_max[i])) {
 					avoid_state = -1;
+					corr_direction = th_min[i];
 				} else {
 					avoid_state = 1;
+					corr_direction = th_max[i];
 				}
+
 				//decide whether its better to go left or right
 				/* TODO: I think this should be in the autopilot rather than in RADAR processing
 				 * - depending on current speed of the drone

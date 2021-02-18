@@ -70,8 +70,10 @@ namespace radar_ros_driver {
             adc_imag_tx1rx2 = myradar.adc_imag_tx1rx2;
 
             test_ros = myradar.avoid_state;
+            dv_ = myradar.corr_direction;
             radar_avoid_msgs::Command command_msg;
             command_msg.avoid_state = test_ros;
+            command_msg.dv = dv_;
             radar_pub_command_.publish(command_msg);  
 
             for(int i=0; i<num_samples_per_chirp*num_chirps; i++){

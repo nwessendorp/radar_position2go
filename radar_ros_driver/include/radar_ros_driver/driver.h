@@ -63,6 +63,7 @@ namespace radar_ros_driver {
 
             //Tracking_Params_t *tracking_list2; // target info
             int32_t test_ros;
+            double dv_;
 
             boost::array<float, 2048> adc_real_tx1rx1_f;	// REAL
             boost::array<float, 2048> adc_imag_tx1rx1_f;	// IMG
