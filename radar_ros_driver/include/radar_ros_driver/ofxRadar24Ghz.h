@@ -40,7 +40,7 @@
 #define RANGE_FFT_SIZE              256
 #define DOWN_CHIRP_DURATION         0.0001
 #define CHIRP_TO_CHIRP_DELAY        0.0001
-#define RANGE_THRESHOLD             800//200
+#define RANGE_THRESHOLD             700//200
 #define DOPPLER_THRESHOLD           50
 #define MIN_DISTANCE                0
 #define MAX_DISTANCE                4

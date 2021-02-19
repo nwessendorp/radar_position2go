@@ -1243,15 +1243,16 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 	vector<float> th_min, th_max, weight;
 	r_a = 0.2;// radius of the drone
 	r_b = 0.25;// radius of the obstacle poles
-	margin = 0.1;
+	margin = 0.2;
 	R = r_a + r_b + margin;
-	//printf("%d\n", avoid_state);
+	double weight_init = 100;
+	uint8_t track_index = 0;
 	for (uint8_t i=0; i< MAX_NUM_TRACKS; i++){
 		if (track_lst[i].is_alived == 1 && track_lst[i].measurement_counter > 5){//TODO tune this param
 			th_cc = asin(R/track_lst[i].range);
 			th_min.push_back(track_lst[i].angle*M_PI/180 - th_cc);
 			th_max.push_back(track_lst[i].angle*M_PI/180 + th_cc);
-			weight.push_back(1/track_lst[i].range);
+			weight.push_back(track_lst[i].range);
 
 
 			// NOTE !!! Angle in this definition is defined positive CCW !!!
@@ -1265,30 +1266,30 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 			}
 			//printf("%f, %f, %f\n", th_min[i],th_max[i] , direction);
 			bool condition = false;
-			if (track_lst[i].range/track_lst[i].speed < 2) {// if time to contact is less than 2s
+			if (track_lst[i].range/track_lst[i].speed < 3) {// if time to contact is less than 2s
 				condition = true;
 			}
-			if (direction > th_min[i] && direction < th_max[i] && condition) {//if relative velocity vector is within collision cone
+			if (direction > th_min[track_index] && direction < th_max[track_index] && condition) {//if relative velocity vector is within collision cone
 				//printf("Avoid mf!\n");
-				if (abs(direction - th_min[i]) < abs(direction - th_max[i])) {
-					avoid_state = -1;
-					corr_direction = th_min[i];
-				} else {
-					avoid_state = 1;
-					corr_direction = th_max[i];
+				if (weight[track_index] < weight_init) {// if closest obstacle:
+					if (abs(direction - th_min[track_index]) < abs(direction - th_max[track_index])) {
+						avoid_state = -1;
+					} else {
+						avoid_state = 1;
+					}
+					weight_init = weight[track_index];
 				}
-
 				//decide whether its better to go left or right
 				/* TODO: I think this should be in the autopilot rather than in RADAR processing
 				 * - depending on current speed of the drone
-				 * - depending on current direction of pole (th_dot)
+				 * - depending on current direction of object (th_dot)
 				 * - should modify current direction and convert to a desirable dv
 				 */
 			} else {
 				//printf("false\n");
 				avoid_state = 0;
 			}
-		break;
+			track_index += 1;
 		}
 	}
 }
