@@ -34,6 +34,7 @@
 #include "radar_msgs/Event.h"
 #include "radar_avoid_msgs/Command.h"
 #include "radar_targets_msgs/Event.h"
+#include <msp_fc_interface/RcData.h>
 
 // Sampling frequency
 #define FREQ 30.0
@@ -48,6 +49,7 @@ namespace radar_ros_driver {
             RadarRosDriver(ros::NodeHandle & nh, ros::NodeHandle nh_private);
             virtual ~RadarRosDriver();
             void readout(uint16_t count);
+            void mav_st_callback(const msp_fc_interface::RcData::ConstPtr& rc_msg);
 
         private: 
 
@@ -62,8 +64,8 @@ namespace radar_ros_driver {
             double *adc_imag_tx1rx2;	// IMG
 
             //Tracking_Params_t *tracking_list2; // target info
-            int32_t test_ros;
-            double dv_;
+            int8_t test_ros;
+            boost::array<float, 2> dv_;
 
             boost::array<float, 2048> adc_real_tx1rx1_f;	// REAL
             boost::array<float, 2048> adc_imag_tx1rx1_f;	// IMG
@@ -74,6 +76,7 @@ namespace radar_ros_driver {
             ros::Publisher      radar_pub_;
             ros::Publisher      radar_pub_command_;
             ros::Publisher      radar_pub_targets_;
+            ros::Subscriber     sub_state;
             volatile bool       running_;
             std::string         ns;
             /*

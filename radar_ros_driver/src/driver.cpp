@@ -40,6 +40,8 @@ namespace radar_ros_driver {
         radar_pub_command_ = nh_.advertise<radar_avoid_msgs::Command>("radar_commands", 10);
 		radar_pub_targets_ = nh_.advertise<radar_targets_msgs::Event>("radar_targets", 10);
 
+        // Avoidance subscriber to velocity state of MAV (for VO)
+        sub_state  = nh_.subscribe("/MAV_state", 10, &RadarRosDriver::mav_st_callback, this);
         myradar.setup();
         running_ = true;
 
@@ -53,6 +55,11 @@ namespace radar_ros_driver {
             ROS_INFO("Shutting down listener...");
             running_ = false;
         }
+    }
+
+    void RadarRosDriver::mav_st_callback(const msp_fc_interface::RcData::ConstPtr& rc_msg) {
+        myradar.v_xa = rc_msg->state[0];
+        myradar.v_ya = rc_msg->state[1];
     }
 
     void RadarRosDriver::readout(uint16_t count){
@@ -69,8 +76,10 @@ namespace radar_ros_driver {
             adc_real_tx1rx2 = myradar.adc_real_tx1rx2;
             adc_imag_tx1rx2 = myradar.adc_imag_tx1rx2;
 
+            // AVOIDANCE publisher
             test_ros = myradar.avoid_state;
-            dv_ = myradar.corr_direction;
+            dv_[0] = (float_t)myradar.v_xa_des;
+            dv_[1] = (float_t)myradar.v_ya_des;
             radar_avoid_msgs::Command command_msg;
             command_msg.avoid_state = test_ros;
             command_msg.dv = dv_;

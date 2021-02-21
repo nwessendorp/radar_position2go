@@ -143,6 +143,7 @@ void ofxRadar24Ghz::setup() {
 
 	// ================= TRACKING =====================
 	enable_tracking = true; // press
+	//true_VO = true;
 	enable_mti_filtering = false;
 	median_angle_arr = (Median_Filtering_t*)malloc(CURRENT_NUM_OF_TRACKS*sizeof(Median_Filtering_t));//[CURRENT_NUM_OF_TRACKS];
 	for(size_t this_median=0; this_median<CURRENT_NUM_OF_TRACKS; this_median++){
@@ -1233,8 +1234,10 @@ void ofxRadar24Ghz::solve_Hungarian(Eigen::MatrixXd& Cost, vector<int>& assignme
 //======================================================================================================================================================
 
 /**
- * Function to perform velocity obstacles
+ * Function to perform velocity obstacles of NEAREST OBJECT
  * finds set of velocity vectors that will result in a collision
+ * if true_VO == false: will output avoidance direction opposite to bearing of object
+ * if true_VO == true: will output desired avoidance velocity vector
  */
 void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 
@@ -1256,9 +1259,10 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 
 
 			// NOTE !!! Angle in this definition is defined positive CCW !!!
-			// velocity direction of self w.r.t. object
+			// velocity direction of self w.r.t. object (V_AB)
 			//                      <---------tangential velocity----------><-radial velocity->
 			float direction = atan2(track_lst[i].speed_th*track_lst[i].range,track_lst[i].speed) + track_lst[i].angle*M_PI/180 + M_PI;
+			float mag = sqrt(pow(track_lst[i].speed_th*track_lst[i].range, 2) + pow(track_lst[i].speed,2));
 			if (direction > M_PI) {
 				direction -= 2*M_PI;
 			} else if (direction < -M_PI){
@@ -1270,12 +1274,32 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 				condition = true;
 			}
 			if (direction > th_min[track_index] && direction < th_max[track_index] && condition) {//if relative velocity vector is within collision cone
-				//printf("Avoid mf!\n");
 				if (weight[track_index] < weight_init) {// if closest obstacle:
-					if (abs(direction - th_min[track_index]) < abs(direction - th_max[track_index])) {
-						avoid_state = -1;
+					//find V_B = V_A - V_AB:
+					double v_xb = this->v_xa - mag*acos(direction);
+					double v_yb = this->v_ya - mag*asin(direction);
+					if (track_lst[i].angle < 0) {// if obstacle to the right, avoid right:
+						if (this->true_VO) {
+							this->avoid_state = 1;//right
+						} else {
+							this->avoid_state = -1;//left
+						}
+						this->v_xa_des = v_xb + mag*acos(th_min[track_index]);
+						this->v_ya_des = v_yb + mag*asin(th_min[track_index]);
+						double mag_ratio = 0.8/sqrt(pow(this->v_xa_des, 2) + pow(this->v_ya_des,2));// normalising factor
+						this->v_xa_des = this->v_xa_des * mag_ratio;
+						this->v_ya_des = this->v_ya_des * mag_ratio;
 					} else {
-						avoid_state = 1;
+						if (this->true_VO) {
+							this->avoid_state = -1;//left
+						} else {
+							this->avoid_state = 1;//right
+						}
+						this->v_xa_des = v_xb + mag*acos(th_max[track_index]);
+						this->v_ya_des = v_yb + mag*asin(th_max[track_index]);
+						double mag_ratio = 0.8/sqrt(pow(this->v_xa_des, 2) + pow(this->v_ya_des,2));// normalising factor
+						this->v_xa_des = this->v_xa_des * mag_ratio;
+						this->v_ya_des = this->v_ya_des * mag_ratio;
 					}
 					weight_init = weight[track_index];
 				}

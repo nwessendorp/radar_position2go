@@ -301,7 +301,6 @@ class ofxRadar24Ghz {
 
 		// ======== Kalman filter matrices =========
 		void kalmanfilter(Eigen::VectorXd& x_hat, Eigen::VectorXd& y, Eigen::MatrixXd& P);
-		double dt = CHIRP_DUR_NS/1000000000.0f;
 		Eigen::MatrixXd A, H, R, P0, I, G;
 		//Eigen::VectorXd Q;
 		Eigen::MatrixXd* P = new Eigen::MatrixXd[5];
@@ -319,9 +318,15 @@ class ofxRadar24Ghz {
 				float wave_length_ant_spacing_ratio);
 
 		// ======== Velocity obstacles =============
+		bool true_VO = true;
 		void velocity_obstacles(Tracking_Params_t *track_lst);
-		int32_t avoid_state;
-		double corr_direction;//desired relative velocity
+		int8_t avoid_state;
+		// Body velocity state (from subscriber to msp):
+		double v_xa = 0;
+		double v_ya = 0;
+		// Desired velocity state (to publisher msp):
+		double v_xa_des = 0;
+		double v_ya_des = 0;
 
 		// Gating distance:
 		double d_abs = 0.4;//meters
