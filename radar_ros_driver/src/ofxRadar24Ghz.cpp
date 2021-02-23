@@ -1244,7 +1244,7 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 	// for every target, find the collision cone (min and max direction vectors of velocity that will result in a collision)
 	float r_a, r_b, margin, R, th_cc;
 	vector<float> th_min, th_max, weight;
-	r_a = 0.2;// radius of the drone
+	r_a = 0.15;// radius of the drone
 	r_b = 0.25;// radius of the obstacle poles
 	margin = 0.2;
 	R = r_a + r_b + margin;
@@ -1270,7 +1270,7 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 			}
 			//printf("%f, %f, %f\n", th_min[i],th_max[i] , direction);
 			bool condition = false;
-			if (track_lst[i].range/track_lst[i].speed < 3) {// if time to contact is less than 2s
+			if (track_lst[i].range/track_lst[i].speed < 2) {// if time to contact is less than 2s
 				condition = true;
 			}
 			if (direction > th_min[track_index] && direction < th_max[track_index] && condition) {//if relative velocity vector is within collision cone

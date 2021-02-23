@@ -335,7 +335,7 @@ class ofxRadar24Ghz {
 		// Measurement vector to be buffered and fed into tracking algo
 		vector<Measurement_elem_t> measurements;
 		// true angle offset
-		double angle_correction = -9.0;
+		double angle_correction = -8.0;
 		// Covariance initiation factor:
 		double cov_factor = 1;
 		double time_stamp = 0;
