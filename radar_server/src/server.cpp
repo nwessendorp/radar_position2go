@@ -74,15 +74,10 @@ namespace radar_server {
 	void Server::radarCallbackTarget(const radar_targets_msgs::Event::ConstPtr& msg){
 		int dimension = (int)(msg->num_current_targets);
 		for(int i=0; i<dimension; i++){
-			RADAR_rec_file_targets << msg->is_associated[i] << ",";
 			RADAR_rec_file_targets << (float) msg->angle[i] << ",";
 			RADAR_rec_file_targets << (float) msg->speed[i] << ",";
 			RADAR_rec_file_targets << (float) msg->range[i] << ",";
-			RADAR_rec_file_targets << (float) msg->strength[i] << ",";
-			RADAR_rec_file_targets << (float) msg->rx1_angle_arg_re[i] << ",";
-			RADAR_rec_file_targets << (float) msg->rx1_angle_arg_im[i] << ",";
-			RADAR_rec_file_targets << (float) msg->rx2_angle_arg_re[i] << ",";
-			RADAR_rec_file_targets << (float) msg->rx2_angle_arg_im[i] << ",";
+			RADAR_rec_file_targets << (float) msg->speed_th[i] << ",";
 			RADAR_rec_file_targets << std::endl;
 		}
 	}

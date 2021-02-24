@@ -34,7 +34,7 @@
 #include "radar_msgs/Event.h"
 #include "radar_avoid_msgs/Command.h"
 #include "radar_targets_msgs/Event.h"
-#include <msp_fc_interface/RcData.h>
+#include "rc_msgs/RcData.h"
 
 // Sampling frequency
 #define FREQ 30.0
@@ -49,7 +49,7 @@ namespace radar_ros_driver {
             RadarRosDriver(ros::NodeHandle & nh, ros::NodeHandle nh_private);
             virtual ~RadarRosDriver();
             void readout(uint16_t count);
-            void mav_st_callback(const msp_fc_interface::RcData::ConstPtr& rc_msg);
+            void mav_st_callback(const rc_msgs::RcData::ConstPtr& rc_msg);
 
         private: 
 
@@ -79,21 +79,20 @@ namespace radar_ros_driver {
             ros::Subscriber     sub_state;
             volatile bool       running_;
             std::string         ns;
-            /*
+            
             // Targets 
-            vector<Measurement_elem_t> current_targets_driver;	    
+            //vector<Measurement_elem_t> current_targets_driver;	    
             uint32_t num_targets_now;
             
-            boost::array<uint32_t, 256> is_associated_f;
-            boost::array<float, 256> angle_f;
-            boost::array<float, 256> speed_f;
-            boost::array<float, 256> range_f;
-            boost::array<float, 256> strength_f;
-            boost::array<float, 256> rx1_angle_arg_re;
-            boost::array<float, 256> rx1_angle_arg_im;
-            boost::array<float, 256> rx2_angle_arg_re;
-            boost::array<float, 256> rx2_angle_arg_im;
-            */
+            //boost::array<uint32_t, 256> is_associated_f;
+            boost::array<float, 5> angle_f;
+            boost::array<float, 5> speed_f;
+            boost::array<float, 5> range_f;
+            boost::array<float, 5> speed_th_f;
+            //boost::array<float, 256> rx1_angle_arg_re;
+            //boost::array<float, 256> rx1_angle_arg_im;
+            //boost::array<float, 256> rx2_angle_arg_re;
+            //boost::array<float, 256> rx2_angle_arg_im;
             
     };
 

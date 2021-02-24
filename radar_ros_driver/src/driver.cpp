@@ -57,7 +57,7 @@ namespace radar_ros_driver {
         }
     }
 
-    void RadarRosDriver::mav_st_callback(const msp_fc_interface::RcData::ConstPtr& rc_msg) {
+    void RadarRosDriver::mav_st_callback(const rc_msgs::RcData::ConstPtr& rc_msg) {
         myradar.v_xa = rc_msg->state[0];
         myradar.v_ya = rc_msg->state[1];
     }
@@ -91,6 +91,19 @@ namespace radar_ros_driver {
                 adc_real_tx1rx2_f[i] = (float_t)(adc_real_tx1rx2[i]);
                 adc_imag_tx1rx2_f[i] = (float_t)(adc_imag_tx1rx2[i]);
             }
+
+            
+            int8_t num_tracks = 0;
+            for (uint8_t i=0; i< MAX_NUM_TRACKS; i++){
+                if (myradar.tracking_list2[i].is_alived == 1 && myradar.tracking_list2[i].measurement_counter > 5){
+                    angle_f[num_tracks] = (float_t)(myradar.tracking_list2[i].angle);
+                    speed_f[num_tracks] = (float_t)(myradar.tracking_list2[i].speed);
+                    range_f[num_tracks] = (float_t)(myradar.tracking_list2[i].range);
+                    speed_th_f[num_tracks] = (float_t)(myradar.tracking_list2[i].speed_th);
+                    num_tracks += 1;
+                }
+            }
+            num_targets_now = num_tracks;
             /*
             // current targets size, maximum supported is (MAX_NUM_TARGETS in ofxRadar24Ghz.h)
             current_targets_driver = myradar.current_targets;
@@ -118,24 +131,18 @@ namespace radar_ros_driver {
 			event_msg.data_rx2_im = adc_imag_tx1rx2_f;
             event_msg.ts = ros::Time::now(); 
             radar_pub_.publish(event_msg);  
-            /*
-            // computed targets range, angle, speed, magnitude
+            
+            // computed targets range, angle, speed
 			if(num_targets_now > 0){
 		        radar_targets_msgs::Event event_targets_msg;
 				event_targets_msg.num_current_targets = num_targets_now;
-		        event_targets_msg.is_associated = is_associated_f;
 		        event_targets_msg.angle = angle_f;
 		        event_targets_msg.speed = speed_f;
 		        event_targets_msg.range = range_f;
-		        event_targets_msg.strength = strength_f;
-				event_targets_msg.rx1_angle_arg_re = rx1_angle_arg_re;
-				event_targets_msg.rx1_angle_arg_im = rx1_angle_arg_im;
-				event_targets_msg.rx2_angle_arg_re = rx2_angle_arg_re;
-				event_targets_msg.rx2_angle_arg_im = rx2_angle_arg_im;
+		        event_targets_msg.speed_th = speed_th_f;
 		        event_targets_msg.ts = ros::Time::now(); 
 		        radar_pub_targets_.publish(event_targets_msg);		
 			}
-            */
         }
 
     }
