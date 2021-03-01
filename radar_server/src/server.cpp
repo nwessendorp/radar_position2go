@@ -78,6 +78,7 @@ namespace radar_server {
 			RADAR_rec_file_targets << (float) msg->speed[i] << ",";
 			RADAR_rec_file_targets << (float) msg->range[i] << ",";
 			RADAR_rec_file_targets << (float) msg->speed_th[i] << ",";
+			RADAR_rec_file_targets << msg->ts;
 			RADAR_rec_file_targets << std::endl;
 		}
 	}

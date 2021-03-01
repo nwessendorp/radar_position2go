@@ -874,6 +874,16 @@ void ofxRadar24Ghz::update() {
 			frame_id = 0;
 			measurements.clear();
 		}
+		for(size_t i=0; i<MAX_NUM_TRACKS;i++){
+			if (tracking_list2[i].is_alived && tracking_list2[i].measurement_counter > 5){// TODO
+				double x1 = tracking_list2[i].range*100*cos((tracking_list2[i].angle)*(PI/180)) ;
+				double y1 = tracking_list2[i].range*100*sin((tracking_list2[i].angle)*(PI/180)) ;
+				//double current_tm = (std::chrono::duration_cast<std::chrono::microseconds>
+				//(std::chrono::high_resolution_clock::now().time_since_epoch()).count())/1000.0;
+				double current_tm3 = ros::Time::now().toSec();
+				//printf("%f, %d, %f, %f\n", current_tm3, i, x1, y1);
+			}
+		}
 		frame_id += 1;
 	}
 }
@@ -968,11 +978,10 @@ void ofxRadar24Ghz::data_association2(Tracking_Params_t *track_lst, vector<Measu
 				for (uint8_t j=0;j<num_of_targets;j++){ //for every measurement
 					double r = measurements[j].range;
 					double th = measurements[j].angle + angle_correction;
-					// TODO: try integrating S (from KF) into cost? (Mahalanobis distance)
 					// cost = d*S*d
 					// Probability of misdetection dependent on angle --> do tests
 					double d = sqrt(pow(r,2) + pow(KF_predict[0],2) - 2*r*KF_predict[0]*cos((th - KF_predict[1])*M_PI/180)); //Euclidean distance
-					double angle_check = th - KF_predict[1]; //TODO integrate information from IMU HERE
+					//double angle_check = th - KF_predict[1]; //TODO integrate information from IMU HERE
 					// Gating: otherwise cost remains at 100
 					if (d < d_abs && measurements[j].range > 0.2){
 						Cost(track_count,j) = pow(d,2);
@@ -980,7 +989,7 @@ void ofxRadar24Ghz::data_association2(Tracking_Params_t *track_lst, vector<Measu
 				}
 				// Misdetections:
 				// Probability of detection P_D dependent on angle: (always bigger than 1)
-				double P_D = cos(x_hat[i].coeff(1)*M_PI/180);//TODO: change appropriately
+				double P_D = cos(x_hat[i].coeff(1)*M_PI/180);
 				Cost(track_count,num_of_targets+track_count) = 1+1-P_D;
 
 				track_count += 1;
@@ -989,11 +998,8 @@ void ofxRadar24Ghz::data_association2(Tracking_Params_t *track_lst, vector<Measu
 		//printf("2\n");
 		// convert cost matrix into assignment matrix using Hungarian algorithm:
 		vector<int> assignment;
-		//std::cout << Cost << std::endl;
-		//printf("%d, %d\n", num_tracks, num_of_targets);
 		solve_Hungarian(Cost, assignment);
 		//printf("3\n");
-		//printf("ass: %d\n", assignment[0]);
 		// Update track with new (kalman filtered) measurements
 		for (uint8_t i = 0; i < MAX_NUM_TRACKS; i++){
 			if (track_lst[i].is_alived == 1){
@@ -1248,8 +1254,12 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 	r_b = 0.25;// radius of the obstacle poles
 	margin = 0.2;
 	R = r_a + r_b + margin;
+	double avoidance_margin = 0.1;
 	double weight_init = 100;
 	uint8_t track_index = 0;
+	uint8_t avoid_state_temp = 0;
+	double v_xa_des_temp = 0;
+	double v_ya_des_temp = 0;
 	for (uint8_t i=0; i< MAX_NUM_TRACKS; i++){
 		if (track_lst[i].is_alived == 1 && track_lst[i].measurement_counter > 5){//TODO tune this param
 			th_cc = asin(R/track_lst[i].range);
@@ -1273,45 +1283,47 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 			if (track_lst[i].range/track_lst[i].speed < 2) {// if time to contact is less than 2s
 				condition = true;
 			}
-			if (direction > th_min[track_index] && direction < th_max[track_index] && condition) {//if relative velocity vector is within collision cone
-				if (weight[track_index] < weight_init) {// if closest obstacle:
+			if (weight[track_index] < weight_init) {// if closest obstacle:
+				if (direction > th_min[track_index] && direction < th_max[track_index] && condition) {//if relative velocity vector is within collision cone
 					//find V_B = V_A - V_AB:
-					double v_xb = this->v_xa - mag*acos(direction);
-					double v_yb = this->v_ya - mag*asin(direction);
-					if (track_lst[i].angle < 0) {// if obstacle to the right, avoid right:
-						if (this->true_VO) {
-							this->avoid_state = 1;//right
-						} else {
-							this->avoid_state = -1;//left
-						}
-						this->v_xa_des = v_xb + mag*acos(th_min[track_index]);
-						this->v_ya_des = v_yb + mag*asin(th_min[track_index]);
-						double mag_ratio = 0.8/sqrt(pow(this->v_xa_des, 2) + pow(this->v_ya_des,2));// normalising factor
-						this->v_xa_des = this->v_xa_des * mag_ratio;
-						this->v_ya_des = this->v_ya_des * mag_ratio;
+					double v_xb = this->v_xa - mag*cos(direction);
+					double v_yb = this->v_ya - mag*sin(direction);
+					double desired_direction = 0;
+					// if obstacle to the right, avoid right: OR //if (abs(direction - th_min[track_index]) > abs(direction - th_max[track_index])) {
+					// note: accuracy of direction in CC is not very accurate, so more predictable implementation:
+					if if (abs(direction - th_min[track_index]) < abs(direction - th_max[track_index])) {//(track_lst[i].angle < 0) {
+						avoid_state_temp = 1;//right
+						desired_direction = th_min[track_index] - avoidance_margin;
 					} else {
-						if (this->true_VO) {
-							this->avoid_state = -1;//left
-						} else {
-							this->avoid_state = 1;//right
-						}
-						this->v_xa_des = v_xb + mag*acos(th_max[track_index]);
-						this->v_ya_des = v_yb + mag*asin(th_max[track_index]);
-						double mag_ratio = 0.8/sqrt(pow(this->v_xa_des, 2) + pow(this->v_ya_des,2));// normalising factor
-						this->v_xa_des = this->v_xa_des * mag_ratio;
-						this->v_ya_des = this->v_ya_des * mag_ratio;
+						avoid_state_temp = -1;//left
+						desired_direction = th_max[track_index] + avoidance_margin;
 					}
-					weight_init = weight[track_index];
+					v_xa_des_temp = v_xb + mag*cos(desired_direction);
+					v_ya_des_temp = v_yb + mag*sin(desired_direction);
+					double mag_ratio = 0.5/sqrt(pow(v_xa_des_temp, 2) + pow(v_ya_des_temp,2));// normalising factor
+					v_xa_des_temp = v_xa_des_temp * mag_ratio;
+					v_ya_des_temp = v_ya_des_temp * mag_ratio;
+					//printf("%f, %f, %f, %f, %f, %f\n", this->v_xa, this->v_ya, v_xb, v_yb, v_xa_des_temp, v_ya_des_temp);
+				} else {
+					avoid_state_temp = 0;
 				}
-				//decide whether its better to go left or right
-				/* TODO: I think this should be in the autopilot rather than in RADAR processing
-				 * - depending on current speed of the drone
-				 * - depending on current direction of object (th_dot)
-				 * - should modify current direction and convert to a desirable dv
-				 */
+				weight_init = weight[track_index];
+			}
+			//if (this->true_VO) {
+			//	avoid_state_temp = avoid_state_temp*-1;
+			//}
+			double n_dir = atan2(v_ya_des_temp, v_xa_des_temp);
+			if (isnan(n_dir)) {
+				this->avoid_state = 1;
+			    this->v_xa_des = 0;
+			    this->v_ya_des = 0.5;
 			} else {
-				//printf("false\n");
-				avoid_state = 0;
+				this->avoid_state = avoid_state_temp;
+				this->v_xa_des = v_xa_des_temp;
+				this->v_ya_des = v_ya_des_temp;
+			}
+			if (this->avoid_state != 0) {
+				//printf("n_dir: %f\n", n_dir*180/M_PI);
 			}
 			track_index += 1;
 		}
