@@ -1291,7 +1291,7 @@ void ofxRadar24Ghz::velocity_obstacles(Tracking_Params_t *track_lst){
 					double desired_direction = 0;
 					// if obstacle to the right, avoid right: OR //if (abs(direction - th_min[track_index]) > abs(direction - th_max[track_index])) {
 					// note: accuracy of direction in CC is not very accurate, so more predictable implementation:
-					if if (abs(direction - th_min[track_index]) < abs(direction - th_max[track_index])) {//(track_lst[i].angle < 0) {
+					if (abs(direction - th_min[track_index]) < abs(direction - th_max[track_index])) {//(track_lst[i].angle < 0) {
 						avoid_state_temp = 1;//right
 						desired_direction = th_min[track_index] - avoidance_margin;
 					} else {
